@@ -58,23 +58,19 @@ def get_users():
         #if no team request received, return all users
         if (request.args.get("team") == None):
             data = {"users": db.get("users")}
-            return create_response(data)
+            success_message = "Retrived all users."
+            return create_response(data = data, message = success_message)
         else:
             #if team request received, check if team exists first
             team = request.args.get("team")
-            exists = False
-            for i in db.get("users"):
-                if (i["team"] == team):
-                    exists = True
-            #if team exists, return users on team, else return error message
-            if (exists):
+            if (len(db.getByTeam("users", team)) != 0):
                 data = {"users": db.getByTeam("users", team)}
-                return create_response(data)
+                success_message = "Retrieved all users on team " + team + "."
+                return create_response(data = data, message = success_message)
             else:
-                data = {"users": db.getById("users", team)}
-                status = 404
-                message = "This team does not exist."
-                return create_response(data, status, message)
+                #if team does not exist, return error msg
+                error_message = "The team " + team + " does not exist."
+                return create_response(status = 404, message = error_message)
 
     if (request.method == "POST"):
         #get new user info in json form
@@ -96,25 +92,31 @@ def get_users():
             return create_response(data = data, status = 201, message = success_message)
 
 
-@app.route("/users/<id>")
+@app.route("/users/<id>", methods=["GET", "PUT", "DELETE"])
 def get_user_by_id(id):
-    exists = False
-    #checks if a user with the id exists
-    for i in db.get("users"):
-        if (i["id"] == int(id)):
-            exists = True
-    #if user exists, return user info
-    if (exists):
-        data = {"users": db.getById("users", int(id))}
-        return create_response(data)
-    else:
-    #if user doesn't exist, return 404 with error message
-        data = {"users": db.getById("users", int(id))}
-        status = 404
-        message = "There are no users with this id."
-        return create_response(data, status, message)
+    id = int(id)
+    if (request.method == "GET"):
+        if (db.getById("users", id) != None):
+            data = {"users": db.getById("users", id)}
+            success_message = "Retrieved user with id of " + str(id) + "!"
+            return create_response(data = data, message = success_message)
+        else:
+        #if user doesn't exist, return 404 with error message
+            data = {"users": db.getById("users", id)}
+            error_message = "Could not find user with an id of " + str(id) + "."
+            return create_response(data = data, status = 404, message = error_message)
 
+    if (request.method == "PUT"):
+        if (db.getById("users", id) != None):
+            update_values = request.get_json()
+            data = {"users": db.updateById("users", id, update_values)}
+            success_message = "User info updated."
+            return create_response(data = data, status = 201, message = success_message)
+        else:
+            error_message = "Could not find user with id of " + str(id) + "." 
+            return create_response(status = 404, message = error_message)
 
+    # if (request.method == "DELETE"):
 
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
