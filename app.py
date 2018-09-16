@@ -54,8 +54,23 @@ def mirror(name):
 
 @app.route("/users")
 def get_users():
-    data = {"users": db.get("users")}
-    return create_response(data)
+    if (request.args.get("team") == None):
+        data = {"users": db.get("users")}
+        return create_response(data)
+    else:
+        team = request.args.get("team")
+        exists = False
+        for i in db.get("users"):
+            if (i["team"] == team):
+                exists = True
+        if (exists):
+            data = {"users": db.getByTeam("users", team)}
+            return create_response(data)
+        else:
+            data = {"users": db.getById("users", team)}
+            status = 404
+            message = "This team does not exist."
+            return create_response(data, status, message)
 
 @app.route("/users/<id>")
 def get_user_by_id(id):
@@ -66,15 +81,14 @@ def get_user_by_id(id):
             exists = True
     #if user exists, return user info
     if (exists):
-        data = {"user": db.getById("users", int(id))}
+        data = {"users": db.getById("users", int(id))}
         return create_response(data)
     else:
     #if user doesn't exist, return 404 with error message
-        data = {"user": db.getById("users", int(id))}
+        data = {"users": db.getById("users", int(id))}
         status = 404
-        message = "The user you are looking for does not exist."
+        message = "There are no users with this id."
         return create_response(data, status, message)
-
 
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
