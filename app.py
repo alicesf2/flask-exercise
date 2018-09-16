@@ -103,7 +103,7 @@ def get_user_by_id(id):
         else:
         #if user doesn't exist, return 404 with error message
             data = {"users": db.getById("users", id)}
-            error_message = "Could not find user with an id of " + str(id) + "."
+            error_message = "Could not find user with id of " + str(id) + "."
             return create_response(data = data, status = 404, message = error_message)
 
     if (request.method == "PUT"):
@@ -113,10 +113,17 @@ def get_user_by_id(id):
             success_message = "User info updated."
             return create_response(data = data, status = 201, message = success_message)
         else:
-            error_message = "Could not find user with id of " + str(id) + "." 
+            error_message = "Could not find user with id of " + str(id) + "."
             return create_response(status = 404, message = error_message)
 
-    # if (request.method == "DELETE"):
+    if (request.method == "DELETE"):
+        if (db.getById("users", id) != None):
+            db.deleteById("users", id)
+            success_message = "User with id of " + str(id) + " deleted."
+            return create_response(message = success_message)
+        else:
+            error_message = "Could not find user with id of " + str(id) + "."
+            return create_response(status = 404, message = error_message)
 
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
