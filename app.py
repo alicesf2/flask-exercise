@@ -52,25 +52,49 @@ def mirror(name):
     return create_response(data)
 
 
-@app.route("/users")
+@app.route("/users", methods=["GET", "POST"])
 def get_users():
-    if (request.args.get("team") == None):
-        data = {"users": db.get("users")}
-        return create_response(data)
-    else:
-        team = request.args.get("team")
-        exists = False
-        for i in db.get("users"):
-            if (i["team"] == team):
-                exists = True
-        if (exists):
-            data = {"users": db.getByTeam("users", team)}
+    if (request.method == "GET"):
+        #if no team request received, return all users
+        if (request.args.get("team") == None):
+            data = {"users": db.get("users")}
             return create_response(data)
         else:
-            data = {"users": db.getById("users", team)}
-            status = 404
-            message = "This team does not exist."
-            return create_response(data, status, message)
+            #if team request received, check if team exists first
+            team = request.args.get("team")
+            exists = False
+            for i in db.get("users"):
+                if (i["team"] == team):
+                    exists = True
+            #if team exists, return users on team, else return error message
+            if (exists):
+                data = {"users": db.getByTeam("users", team)}
+                return create_response(data)
+            else:
+                data = {"users": db.getById("users", team)}
+                status = 404
+                message = "This team does not exist."
+                return create_response(data, status, message)
+
+    if (request.method == "POST"):
+        #get new user info in json form
+        payload = request.get_json()
+        error_message = "User could not be created."
+
+        if (type(payload["name"]) != str):
+            error_message += " Name should be a string."
+            return create_response(status = 422, message = error_message)
+        if (type(payload["age"]) != int):
+            error_message += " Age should be an integer."
+            return create_response(status = 422, message = error_message)
+        if (type(payload["team"]) != str):
+            error_message += " Team should be a string."
+            return create_response(status = 422, message = error_message)
+        else:
+            data = {"new_user": db.create("users", payload)}
+            success_message = "New user created!"
+            return create_response(data = data, status = 201, message = success_message)
+
 
 @app.route("/users/<id>")
 def get_user_by_id(id):
@@ -89,6 +113,8 @@ def get_user_by_id(id):
         status = 404
         message = "There are no users with this id."
         return create_response(data, status, message)
+
+
 
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~

@@ -18,8 +18,6 @@ def getByTeam(type, team):
             arr.append(i)
     return arr;
 
-
-
 def create(type, payload):
     last_id = max([i["id"] for i in get(type)])
     new_id = last_id + 1
