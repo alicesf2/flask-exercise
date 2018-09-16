@@ -57,6 +57,25 @@ def get_users():
     data = {"users": db.get("users")}
     return create_response(data)
 
+@app.route("/users/<id>")
+def get_user_by_id(id):
+    exists = False
+    #checks if a user with the id exists
+    for i in db.get("users"):
+        if (i["id"] == int(id)):
+            exists = True
+    #if user exists, return user info
+    if (exists):
+        data = {"user": db.getById("users", int(id))}
+        return create_response(data)
+    else:
+    #if user doesn't exist, return 404 with error message
+        data = {"user": db.getById("users", int(id))}
+        status = 404
+        message = "The user you are looking for does not exist."
+        return create_response(data, status, message)
+
+
 """
 ~~~~~~~~~~~~ END API ~~~~~~~~~~~~
 """
