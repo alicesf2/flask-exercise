@@ -36,6 +36,6 @@ def test_get_user_id(client):
     res = client.get("/users/1")
     assert res.status_code == 200
 
-    res_user = res.json["result"]["user"]
+    res_user = res.json["result"]["users"]
     assert res_user["name"] == "Aria"
     assert res_user["age"] == 19

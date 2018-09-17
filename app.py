@@ -40,17 +40,14 @@ def create_response(
 ~~~~~~~~~~~~ API ~~~~~~~~~~~~
 """
 
-
 @app.route("/")
 def hello_world():
     return create_response({"content": "hello world!"})
-
 
 @app.route("/mirror/<name>")
 def mirror(name):
     data = {"name": name}
     return create_response(data)
-
 
 @app.route("/users", methods=["GET", "POST"])
 def get_users():
@@ -61,47 +58,53 @@ def get_users():
             success_message = "Retrived all users."
             return create_response(data = data, message = success_message)
         else:
-            #if team request received, check if team exists first
+            #if team request received, check if team exists
             team = request.args.get("team")
             if (len(db.getByTeam("users", team)) != 0):
                 data = {"users": db.getByTeam("users", team)}
                 success_message = "Retrieved all users on team " + team + "."
                 return create_response(data = data, message = success_message)
             else:
-                #if team does not exist, return error msg
                 error_message = "The team " + team + " does not exist."
                 return create_response(status = 404, message = error_message)
 
     if (request.method == "POST"):
-        #get new user info in json form
         payload = request.get_json()
         error_message = "User could not be created."
 
+        #check for missing fields
+        if (len(payload) < 3):
+            error_message += " One of the 3 required fields (name, age, team) is missing."
+            return create_response(status = 422, message = error_message)
+
+        #check for type mismatch
         if (type(payload["name"]) != str):
             error_message += " Name should be a string."
             return create_response(status = 422, message = error_message)
-        if (type(payload["age"]) != int):
+        elif (type(payload["age"]) != int):
             error_message += " Age should be an integer."
             return create_response(status = 422, message = error_message)
-        if (type(payload["team"]) != str):
+        elif (type(payload["team"]) != str):
             error_message += " Team should be a string."
             return create_response(status = 422, message = error_message)
-        else:
-            data = {"new_user": db.create("users", payload)}
-            success_message = "New user created!"
-            return create_response(data = data, status = 201, message = success_message)
 
+        #if all payload types match expected types
+        if (type(payload["name"]) == str and type(payload["age"]) == int and
+            type(payload["team"]) == str):
+            data = {"new_user": db.create("users", payload)}
+            success_message = "New user created."
+            return create_response(data = data, status = 201, message = success_message)
 
 @app.route("/users/<id>", methods=["GET", "PUT", "DELETE"])
 def get_user_by_id(id):
     id = int(id)
     if (request.method == "GET"):
+        #check if user id exists
         if (db.getById("users", id) != None):
             data = {"users": db.getById("users", id)}
-            success_message = "Retrieved user with id of " + str(id) + "!"
+            success_message = "Retrieved user with id of " + str(id) + "."
             return create_response(data = data, message = success_message)
         else:
-        #if user doesn't exist, return 404 with error message
             data = {"users": db.getById("users", id)}
             error_message = "Could not find user with id of " + str(id) + "."
             return create_response(data = data, status = 404, message = error_message)
