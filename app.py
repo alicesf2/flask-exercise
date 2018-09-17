@@ -35,6 +35,20 @@ def create_response(
     }
     return jsonify(response), status
 
+#helper method to check for type mismatch
+def check_types(payload, error_message):
+    if (type(payload["name"]) != str):
+        error_message += " Name should be a string."
+    elif (type(payload["age"]) != int):
+        error_message += " Age should be an integer."
+    elif (type(payload["team"]) != str):
+        error_message += " Team should be a string."
+    return error_message
+
+#helper method to check if all types match
+def types_match(payload):
+    return (type(payload["name"]) == str and type(payload["age"]) == int and
+            type(payload["team"]) == str)
 
 """
 ~~~~~~~~~~~~ API ~~~~~~~~~~~~
@@ -77,23 +91,14 @@ def get_users():
             error_message += " One of the 3 required fields (name, age, team) is missing."
             return create_response(status = 422, message = error_message)
 
-        #check for type mismatch
-        if (type(payload["name"]) != str):
-            error_message += " Name should be a string."
-            return create_response(status = 422, message = error_message)
-        elif (type(payload["age"]) != int):
-            error_message += " Age should be an integer."
-            return create_response(status = 422, message = error_message)
-        elif (type(payload["team"]) != str):
-            error_message += " Team should be a string."
-            return create_response(status = 422, message = error_message)
-
-        #if all payload types match expected types
-        if (type(payload["name"]) == str and type(payload["age"]) == int and
-            type(payload["team"]) == str):
-            data = {"new_user": db.create("users", payload)}
+        #check if types match
+        if (types_match(payload)):
+            data = {"user": db.create("users", payload)}
             success_message = "New user created."
             return create_response(data = data, status = 201, message = success_message)
+        else:
+            error_message = check_types(payload, error_message)
+            return create_response(status = 422, message = error_message)
 
 @app.route("/users/<id>", methods=["GET", "PUT", "DELETE"])
 def get_user_by_id(id):
@@ -101,18 +106,17 @@ def get_user_by_id(id):
     if (request.method == "GET"):
         #check if user id exists
         if (db.getById("users", id) != None):
-            data = {"users": db.getById("users", id)}
+            data = {"user": db.getById("users", id)}
             success_message = "Retrieved user with id of " + str(id) + "."
             return create_response(data = data, message = success_message)
         else:
-            data = {"users": db.getById("users", id)}
             error_message = "Could not find user with id of " + str(id) + "."
-            return create_response(data = data, status = 404, message = error_message)
+            return create_response(status = 404, message = error_message)
 
     if (request.method == "PUT"):
         if (db.getById("users", id) != None):
             update_values = request.get_json()
-            data = {"users": db.updateById("users", id, update_values)}
+            data = {"user": db.updateById("users", id, update_values)}
             success_message = "User info updated."
             return create_response(data = data, status = 201, message = success_message)
         else:
